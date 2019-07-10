@@ -25,17 +25,25 @@ class PubSub {
         this.pubnub = new PubNub(credentials);
 
         // subscribe PubNub instance to the channels
-        this.pubnub.subscribe({ channels: [Object.values(CHANNELS)] });
+        this.pubnub.subscribe({ channels: [Object.values(CHANNELS)] })
 
         this.pubnub.addListener(this.listener());
     }
 
     listener() {
         return {
-            message: messageObject => {
+            // handling message event published and extracting the channel and the actual message
+            message: (messageObject) => {
                 const { channel, message } = messageObject;
                 
                 console.log(`Message received. Channel: ${channel}. Message: ${message}`);
+
+                // transform the JSON.stringyfied chain back to a JavaScript object array
+                const parsedMessage = JSON.parse(message);
+
+                if(channel === CHANNELS.BLOCKCHAIN) {
+                    this.blockchain.replaceChain(parsedMessage);
+                }
             }
         };
     }
@@ -44,16 +52,18 @@ class PubSub {
         this.pubnub.publish({ channel, message });
     }
 
-    subscribeToChannels() {
-        Object.values(CHANNELS).forEach((channel) => {
-            this.pubnub.subscribe(channel);
-        })
+    broadcastChain() {
+        this.publish({
+            channel: CHANNELS.BLOCKCHAIN,
+            // once it can only publish strings, we must use JSON.stringfy method and pass the chain array as parameters so we can publish it
+            message: JSON.stringify(this.blockchain.chain)
+        });
     }
 }
 
-// const teste = new PubSub();
+ //const teste = new PubSub();
 
-// teste.publish({ channel: CHANNELS.TEST, message: 'oi'});
-// teste.listener();
+ //teste.publish({ channel: CHANNELS.TEST, message: 'oi'});
+ //teste.listener();
 
 module.exports = PubSub;

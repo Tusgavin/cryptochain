@@ -2,11 +2,16 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const Blockchain = require('./blockchain');
+const PubSub = require('./pubsub');
 
 // creating an application object
 const app = express();
 const blockchain = new Blockchain();
+const pubsub = new PubSub({ blockchain });
 
+setTimeout(() => pubsub.broadcastChain(), 1000);
+
+// basically tells the system that you want json to be used
 app.use(bodyParser.json());
 
 // define GET request to get all the blocks from the blockchain
