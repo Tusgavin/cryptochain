@@ -1,6 +1,7 @@
 // require express
 const express = require('express');
 const bodyParser = require('body-parser');
+const request = require('request');
 const Blockchain = require('./blockchain');
 const PubSub = require('./pubsub');
 
@@ -9,7 +10,9 @@ const app = express();
 const blockchain = new Blockchain();
 const pubsub = new PubSub({ blockchain });
 
-setTimeout(() => pubsub.broadcastChain(), 1000);
+const DEFAULT_PORT = 3000;
+const ROOT_NODE_ADDRESS = `http://localhost:${DEFAULT_PORT}`;
+
 
 // basically tells the system that you want json to be used
 app.use(bodyParser.json());
@@ -31,7 +34,19 @@ app.post('/api/mine', (req, res) => {
     res.redirect('/api/blocks');
 });
 
-const DEFAULT_PORT = 3000;
+// when started a new peer, make sure to sync it with the root chain
+const syncChains = () => {
+    request({ url: `${ROOT_NODE_ADDRESS}/api/blocks `}, (error, reponse, body) => {
+        // TCP protocol, default reponse status === 200
+        if(!error && reponse.statusCode === 200) {
+            const rootChain = JSON.parse(body);
+
+            console.log('replace chain on a sync with', rootChain);
+            blockchain.replaceChain(rootChain);
+        }
+    });
+};
+
 let PEER_PORT;
 
 // make sure peers listen on different ports
@@ -41,4 +56,11 @@ if(process.env.GENERATE_PEER_PORT === 'true') {
 
 // if PEER_PORT doesn't have a value, use DEFAULT_PORT
 const PORT = PEER_PORT || DEFAULT_PORT;
-app.listen(PORT, () => console.log(`listening on port: ${ PORT }`));
+app.listen(PORT, () => {
+    console.log(`listening on port: ${ PORT }`);
+
+    // if PORT == DEFAULT_PORT, it is a redundant action to sync it
+    if(PORT !== DEFAULT_PORT) {
+        syncChains();   
+    }
+});
