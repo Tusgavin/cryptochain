@@ -2,9 +2,9 @@ const hexToBinary = require('hex-to-binary');
 // require the block class from another file
 const Block = require('./block');
 // require the object GENESIS_DATA
-const { GENESIS_DATA, MINE_RATE } = require('./config');
+const { GENESIS_DATA, MINE_RATE } = require('../config');
 // require the function cryptoHash
-const cryptoHash = require('./crypto-hash');
+const cryptoHash = require('../utils/crypto-hash');
 
 // testing Block class
 describe('Block', () => {

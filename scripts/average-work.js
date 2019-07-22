@@ -1,6 +1,6 @@
 // script to compare binary hash values and hexadecimal hash values
 
-const Blockchain = require('./blockchain');
+const Blockchain = require('../blockchain/blockhain');
 
 const blockchain = new Blockchain;
 
