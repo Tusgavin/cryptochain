@@ -20,10 +20,11 @@ const CHANNELS = {
 
 // creating PubSub class so it can Publish and Subscribe in PubNub app services
 class PubSub {
-    constructor({ blockchain, transactionPool }) {
+    constructor({ blockchain, transactionPool, wallet }) {
         // put the PubSub class to work with a blockchain instance
         this.blockchain = blockchain;
         this.transactionPool = transactionPool;
+        this.wallet = wallet;
         this.pubnub = new PubNub(credentials);
 
         // subscribe PubNub instance to the channels
@@ -45,14 +46,19 @@ class PubSub {
 
                 switch(channel) {
                     case CHANNELS.BLOCKCHAIN:
-                        this.blockchain.replaceChain(parsedMessage);
-                        break;
+                      this.blockchain.replaceChain(parsedMessage, true, () => {
+                        this.transactionPool.clearBlockchainTransactions({ chain: parsedMessage.chain });
+                      });
+                      break;
+                    // Pubnub is not able to prevent self-broadcasts, so it does not take callback functions to fire when the pub/sub functions complete
                     case CHANNELS.TRANSACTION:
+                      if (!this.transactionPool.existingTransaction({ inputAddress: this.wallet.publicKey })) {
                         this.transactionPool.setTransaction(parsedMessage);
-                        break;
+                      }
+                      break;
                     default:
-                        return; 
-                }
+                      return;
+                } 
             }
         };
     }
@@ -73,7 +79,7 @@ class PubSub {
         this.publish({
             channel: CHANNELS.TRANSACTION,
             message: JSON.stringify(transaction)
-        })
+        });
     }
 }
 
