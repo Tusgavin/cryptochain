@@ -83,9 +83,4 @@ class PubSub {
     }
 }
 
- //const teste = new PubSub();
-
- //teste.publish({ channel: CHANNELS.TEST, message: 'oi'});
- //teste.listener();
-
 module.exports = PubSub;

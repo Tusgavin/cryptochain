@@ -69,14 +69,23 @@ app.get('/api/transaction-pool-map', (req, res) => {
 });
 
 // when started a new peer, make sure to sync it with the root chain
-const syncChains = () => {
-    request({ url: `${ROOT_NODE_ADDRESS}/api/blocks `}, (error, reponse, body) => {
+const syncWithRootState = () => {
+    request({ url: `${ROOT_NODE_ADDRESS}/api/blocks` }, (error, response, body) => {
         // TCP protocol, default reponse status === 200
-        if(!error && reponse.statusCode === 200) {
+        if(!error && response.statusCode === 200) {
             const rootChain = JSON.parse(body);
 
             console.log('replace chain on a sync with', rootChain);
             blockchain.replaceChain(rootChain);
+        }
+    });
+
+    request({ url: `${ROOT_NODE_ADDRESS}/api/transaction-pool-map` }, (error, response, body) => {
+        if(!error && response.statusCode === 200) {
+            const rootTransactionPoolMap = JSON.parse(body);
+
+            console.log('replace transaction pool map on a sync with', rootTransactionPoolMap);
+            transactionPool.setMap(rootTransactionPoolMap);
         }
     });
 };
@@ -95,6 +104,6 @@ app.listen(PORT, () => {
 
     // if PORT == DEFAULT_PORT, it is a redundant action to sync it
     if(PORT !== DEFAULT_PORT) {
-        syncChains();   
+        syncWithRootState();   
     }
 });
