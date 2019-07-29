@@ -8,7 +8,7 @@ const cryptoHash = (...inputs) => {
 
     // create the hash value based on the strings given
     // sort the array so we can get the same output independently of the input's order
-    hash.update(inputs.sort().join(' '));
+    hash.update(inputs.map((input) => JSON.stringify(input)).sort().join(' '));
 
     // represent the result of the hash in binary
     return hash.digest('hex');
