@@ -14,14 +14,16 @@ const credentials = {
 // defining channels
 const CHANNELS = {
     TEST: 'TEST',
-    BLOCKCHAIN: 'BLOCKCHAIN'
+    BLOCKCHAIN: 'BLOCKCHAIN',
+    TRANSACTION: 'TRANSACTION'
 };
 
 // creating PubSub class so it can Publish and Subscribe in PubNub app services
 class PubSub {
-    constructor({ blockchain }) {
+    constructor({ blockchain, transactionPool }) {
         // put the PubSub class to work with a blockchain instance
         this.blockchain = blockchain;
+        this.transactionPool = transactionPool;
         this.pubnub = new PubNub(credentials);
 
         // subscribe PubNub instance to the channels
@@ -41,8 +43,15 @@ class PubSub {
                 // transform the JSON.stringyfied chain back to a JavaScript object array
                 const parsedMessage = JSON.parse(message);
 
-                if(channel === CHANNELS.BLOCKCHAIN) {
-                    this.blockchain.replaceChain(parsedMessage);
+                switch(channel) {
+                    case CHANNELS.BLOCKCHAIN:
+                        this.blockchain.replaceChain(parsedMessage);
+                        break;
+                    case CHANNELS.TRANSACTION:
+                        this.transactionPool.setTransaction(parsedMessage);
+                        break;
+                    default:
+                        return; 
                 }
             }
         };
@@ -58,6 +67,13 @@ class PubSub {
             // once it can only publish strings, we must use JSON.stringfy method and pass the chain array as parameters so we can publish it
             message: JSON.stringify(this.blockchain.chain)
         });
+    }
+
+    broadcastTransaction(transaction) {
+        this.publish({
+            channel: CHANNELS.TRANSACTION,
+            message: JSON.stringify(transaction)
+        })
     }
 }
 
