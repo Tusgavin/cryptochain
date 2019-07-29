@@ -4,7 +4,7 @@ const Block = require('./block');
 // require the object GENESIS_DATA
 const { GENESIS_DATA, MINE_RATE } = require('../config');
 // require the function cryptoHash
-const cryptoHash = require('../utils/crypto-hash');
+const { cryptoHash } = require('../utils');
 
 // testing Block class
 describe('Block', () => {
