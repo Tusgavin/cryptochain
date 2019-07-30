@@ -54,7 +54,7 @@ class Blockchain {
     }
 
     // Not static because it's based in a individual instance that is going to be replaced
-    replaceChain(chain) {
+    replaceChain(chain, onSuccess) {
         // check length of the new chain
         if(chain.length <= this.chain.length) {
             console.error('new chain must be longer!');
@@ -66,6 +66,8 @@ class Blockchain {
             console.error('new chain must be valid!');
             return;
         }
+
+        if(onSuccess) onSuccess();
 
         console.log('replacing cahin with', chain);
         // replace the chain if everything is correct

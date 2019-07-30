@@ -46,8 +46,8 @@ class PubSub {
 
                 switch(channel) {
                     case CHANNELS.BLOCKCHAIN:
-                      this.blockchain.replaceChain(parsedMessage, true, () => {
-                        this.transactionPool.clearBlockchainTransactions({ chain: parsedMessage.chain });
+                      this.blockchain.replaceChain(parsedMessage, () => {
+                        this.transactionPool.clearBlockchainTransactions({ chain: parsedMessage });
                       });
                       break;
                     // Pubnub is not able to prevent self-broadcasts, so it does not take callback functions to fire when the pub/sub functions complete
