@@ -76,7 +76,11 @@ app.get('/api/mine-transactions', (req, res) => {
     res.redirect('/api/blocks');
 });
 
-// when started a new peer, make sure to sync it with the root chain
+app.get('/api/wallet-info', (req, res) => {
+    res.json({ address: wallet.publicKey, balance: Wallet.calculateBalance({ chain: blockchain.chain, address: wallet.publicKey })});
+});
+
+// when started a Snew peer, make sure to sync it with the root chain
 const syncWithRootState = () => {
     request({ url: `${ROOT_NODE_ADDRESS}/api/blocks` }, (error, response, body) => {
         // TCP protocol, default reponse status === 200

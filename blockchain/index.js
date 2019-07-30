@@ -1,5 +1,8 @@
 const Block = require('./block');
 const { cryptoHash } = require('../utils');
+const { REWARD_INPUT, MINING_REWARD } = require('../config');
+const Transaction = require('../wallet/transaction');
+const Wallet = require('../wallet');
 
 class Blockchain {
     constructor() {
@@ -54,7 +57,7 @@ class Blockchain {
     }
 
     // Not static because it's based in a individual instance that is going to be replaced
-    replaceChain(chain, onSuccess) {
+    replaceChain(chain, validateTransactions, onSuccess) {
         // check length of the new chain
         if(chain.length <= this.chain.length) {
             console.error('new chain must be longer!');
@@ -67,11 +70,67 @@ class Blockchain {
             return;
         }
 
+        if(validateTransactions && !this.validTransactionData({ chain })) {
+            console.error('The incoming chain has invalid data');
+            return;
+        }
+
         if(onSuccess) onSuccess();
 
         console.log('replacing cahin with', chain);
         // replace the chain if everything is correct
         this.chain = chain;
+    }
+
+    validTransactionData({ chain }) {
+        for(let aux = 1; aux < chain.length; aux++) {
+            const block = chain[aux];
+            const transactionSet = new Set();
+            let rewardTransactionCount = 0;
+
+            for(let transaction of block.data) {
+                if(transaction.input.address === REWARD_INPUT.address) {
+                    rewardTransactionCount += 1;
+
+                    if(rewardTransactionCount > 1) {
+                        console.error('Miner rewards exceed limit');
+                        return false;
+                    }
+
+                    // Onde you don't know the miner wallet PK, you can access the value in the Map by using Object.values
+                    if(Object.values(transaction.outputMap)[0] !== MINING_REWARD) {
+                        console.error('Miner reward amount is invalid');
+                        return false;
+                    }
+                } else {
+                    if(!Transaction.validTransaction(transaction)) {
+                        console.error('Invalid transaction');
+                        return false;
+                    }
+
+                    const trueBalance = Wallet.calculateBalance({
+                        // the chain must be from the instance that called the function
+                        // if it was the chain passed as parameter it would be easy to fake it 
+                        chain: this.chain,
+                        address: transaction.input.address
+                    });
+
+                    if(transaction.input.amount !== trueBalance) {
+                        console.error('Invalid input amount');
+                        return false;
+                    }
+
+                    if(transactionSet.has(transaction)) {
+                        console.error('An identical transaction appears more than once in the block');
+                        return false;
+                    } else {
+                        transactionSet.add(transaction);
+                    }
+                }
+            }
+        }
+
+        return true;
     }
 }
 
