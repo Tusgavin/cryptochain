@@ -2,6 +2,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const request = require('request');
+const path = require('path');
 const Blockchain = require('./blockchain');
 const PubSub = require('./app/pubsub');
 const TransactionPool = require('./wallet/transaction-pool');
@@ -22,6 +23,7 @@ const ROOT_NODE_ADDRESS = `http://localhost:${DEFAULT_PORT}`;
 
 // basically tells the system that you want json to be used
 app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname, 'client/dist')));
 
 // define GET request to get all the blocks from the blockchain
 app.get('/api/blocks', (req, res) => {
@@ -80,7 +82,12 @@ app.get('/api/wallet-info', (req, res) => {
     res.json({ address: wallet.publicKey, balance: Wallet.calculateBalance({ chain: blockchain.chain, address: wallet.publicKey })});
 });
 
-// when started a Snew peer, make sure to sync it with the root chain
+// * means any endpoint expect the ones define above
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'client/dist/index.html'));
+});
+
+// when started a new peer, make sure to sync it with the root chain
 const syncWithRootState = () => {
     request({ url: `${ROOT_NODE_ADDRESS}/api/blocks` }, (error, response, body) => {
         // TCP protocol, default reponse status === 200
